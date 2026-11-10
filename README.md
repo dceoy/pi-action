@@ -54,8 +54,11 @@ Pi reads provider credentials from the environment (for example `ANTHROPIC_API_K
 | `pi-version`          | `latest`      | `@earendil-works/pi-coding-agent` version to install, or `latest`.         |
 | `node-version`        | `24`          | Node.js version used to run Pi.                                            |
 | `minimum-release-age` | `1440`        | Minimum package release age in minutes for pnpm; `0` disables the check.   |
+| `pr-loop-ref`         | Pinned SHA    | Full commit SHA of the pr-loop skills to install.                          |
 | `timeout-minutes`     | `60`          | Stop Pi after this many minutes.                                           |
 
 The only output is `pi-version`, the installed Pi version.
+
+Each run installs the four [pr-loop skills](https://github.com/dceoy/pr-loop) at the pinned commit into a temporary directory and makes them available to Pi. The runner needs GitHub CLI with `gh skill` support and access to the repository.
 
 Pi runs its tools (including `bash`) without a permission prompt, so grant the job only the permissions the task needs and do not pass untrusted text as `prompt`.

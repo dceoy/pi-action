@@ -32,6 +32,10 @@ inputs:
     required: false
     description: Minimum age in minutes for packages installed by pnpm; set to 0 to disable
     default: '1440'
+  pr-loop-ref:
+    required: false
+    description: Full immutable pr-loop commit SHA supplying the skills
+    default: d1d547b54d39d8c4b4c3724fcddaabe96e669294  # v1.0.1
   timeout-minutes:
     required: false
     description: Maximum minutes to let Pi run before it is killed (uses 'timeout'/'gtimeout' when available; otherwise runs without an enforced timeout).
@@ -66,11 +70,25 @@ runs:
         THINKING: ${{ inputs.thinking }}
         TOOLS: ${{ inputs.tools }}
         TIMEOUT_MINUTES: ${{ inputs.timeout-minutes }}
+        PR_LOOP_REF: ${{ inputs.pr-loop-ref }}
+        PR_LOOP_INSTALL_TOKEN: ${{ github.token }}
+        RUNNER_TEMP: ${{ runner.temp }}
       run: |
         if [[ -z "${PROMPT}" ]]; then
           echo "::error::The 'prompt' input is required." >&2
           exit 1
         fi
+        if [[ ! "${PR_LOOP_REF}" =~ ^[[:xdigit:]]{40}$ ]]; then
+          echo "::error::pr-loop-ref must be a full commit SHA." >&2
+          exit 1
+        fi
+        skill_dir="$(mktemp -d "${RUNNER_TEMP%/}/pi-skills.XXXXXXXX")"
+        trap 'rm -rf -- "${skill_dir}"' EXIT
+        GH_TOKEN="${PR_LOOP_INSTALL_TOKEN}" gh skill install dceoy/pr-loop --all --pin "${PR_LOOP_REF}" --dir "${skill_dir}"
+        unset PR_LOOP_INSTALL_TOKEN
+        for skill in issue-to-pr pr-review pr-feedback-triage pr-loop; do
+          test -f "${skill_dir}/${skill}/SKILL.md"
+        done
         cmd=()
         if command -v timeout > /dev/null 2>&1; then
           cmd+=(timeout "${TIMEOUT_MINUTES}m")
@@ -80,6 +98,9 @@ runs:
           echo "::warning::No timeout command found (timeout/gtimeout); running Pi without an enforced timeout."
         fi
         cmd+=(pi --print --no-session)
+        for skill in issue-to-pr pr-review pr-feedback-triage pr-loop; do
+          cmd+=(--skill "${skill_dir}/${skill}")
+        done
         if [[ -n "${MODEL}" ]]; then cmd+=(--model "${MODEL}"); fi
         if [[ -n "${THINKING}" ]]; then cmd+=(--thinking "${THINKING}"); fi
         if [[ -n "${TOOLS}" ]]; then cmd+=(--tools "${TOOLS}"); fi
