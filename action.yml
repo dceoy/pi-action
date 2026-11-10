@@ -43,13 +43,18 @@ runs:
       uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1  # v7.1.0
       with:
         node-version: ${{ inputs.node-version }}
+    - name: Set up pnpm
+      uses: pnpm/action-setup@fc06bc1257f339d1d5d8b3a19a8cae5388b55320  # v4.4.0
+      with:
+        version: 11
+        run_install: false
     - name: Install Pi
       id: install
       shell: bash -euo pipefail {0}
       env:
         PI_VERSION: ${{ inputs.pi-version }}
       run: |
-        npm install --global --ignore-scripts "@earendil-works/pi-coding-agent@${PI_VERSION#v}"
+        pnpm add --global --ignore-scripts "@earendil-works/pi-coding-agent@${PI_VERSION#v}"
         echo "pi-version=$(pi --version)" | tee -a "${GITHUB_OUTPUT}"
     - name: Run Pi
       shell: bash -euo pipefail {0}
