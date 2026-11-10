@@ -1,0 +1,80 @@
+---
+name: Pi Coding Agent Action
+description: Run the Pi coding agent in GitHub Actions workflows
+branding:
+  icon: terminal
+  color: black
+inputs:
+  prompt:
+    required: true
+    description: Prompt to send to Pi in non-interactive print mode
+  model:
+    required: false
+    description: Model to use, in provider/model format (e.g., anthropic/claude-opus-5). Empty uses Pi's default model.
+    default: ''
+  thinking:
+    required: false
+    description: Thinking level (off, minimal, low, medium, high, xhigh, max). Empty uses the model default.
+    default: ''
+  tools:
+    required: false
+    description: Comma-separated allowlist of tool names (e.g., read,grep,find,ls for a read-only run). Empty uses Pi's default tools.
+    default: ''
+  pi-version:
+    required: false
+    description: Version of @earendil-works/pi-coding-agent to install (e.g., 1.5.2 or latest)
+    default: 1.5.2
+  node-version:
+    required: false
+    description: Node.js version used to run Pi
+    default: '24'
+  timeout-minutes:
+    required: false
+    description: Maximum minutes to let Pi run before it is killed (uses 'timeout'/'gtimeout' when available; otherwise runs without an enforced timeout).
+    default: '60'
+outputs:
+  pi-version:
+    description: Pi version installed for this run.
+    value: ${{ steps.install.outputs.pi-version }}
+runs:
+  using: composite
+  steps:
+    - name: Set up Node.js
+      uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1  # v7.1.0
+      with:
+        node-version: ${{ inputs.node-version }}
+    - name: Install Pi
+      id: install
+      shell: bash -euo pipefail {0}
+      env:
+        PI_VERSION: ${{ inputs.pi-version }}
+      run: |
+        npm install --global --ignore-scripts "@earendil-works/pi-coding-agent@${PI_VERSION#v}"
+        echo "pi-version=$(pi --version)" | tee -a "${GITHUB_OUTPUT}"
+    - name: Run Pi
+      shell: bash -euo pipefail {0}
+      env:
+        PROMPT: ${{ inputs.prompt }}
+        MODEL: ${{ inputs.model }}
+        THINKING: ${{ inputs.thinking }}
+        TOOLS: ${{ inputs.tools }}
+        TIMEOUT_MINUTES: ${{ inputs.timeout-minutes }}
+      run: |
+        if [[ -z "${PROMPT}" ]]; then
+          echo "::error::The 'prompt' input is required." >&2
+          exit 1
+        fi
+        cmd=()
+        if command -v timeout > /dev/null 2>&1; then
+          cmd+=(timeout "${TIMEOUT_MINUTES}m")
+        elif command -v gtimeout > /dev/null 2>&1; then
+          cmd+=(gtimeout "${TIMEOUT_MINUTES}m")
+        else
+          echo "::warning::No timeout command found (timeout/gtimeout); running Pi without an enforced timeout."
+        fi
+        cmd+=(pi --print --no-session)
+        if [[ -n "${MODEL}" ]]; then cmd+=(--model "${MODEL}"); fi
+        if [[ -n "${THINKING}" ]]; then cmd+=(--thinking "${THINKING}"); fi
+        if [[ -n "${TOOLS}" ]]; then cmd+=(--tools "${TOOLS}"); fi
+        # Pi waits for piped stdin in print mode; never let it block on the runner.
+        "${cmd[@]}" -- "${PROMPT}" < /dev/null
