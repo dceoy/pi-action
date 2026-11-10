@@ -51,7 +51,7 @@ Pi reads provider credentials from the environment (for example `ANTHROPIC_API_K
 | `model`               | Pi default    | Model in `provider/model` format.                                          |
 | `thinking`            | Model default | Thinking level: `off`, `minimal`, `low`, `medium`, `high`, `xhigh`, `max`. |
 | `tools`               | Pi default    | Comma-separated tool allowlist, e.g. `read,grep,find,ls` for read-only.    |
-| `pi-version`          | `1.5.2`       | `@earendil-works/pi-coding-agent` version to install, or `latest`.         |
+| `pi-version`          | `latest`      | `@earendil-works/pi-coding-agent` version to install, or `latest`.         |
 | `node-version`        | `24`          | Node.js version used to run Pi.                                            |
 | `minimum-release-age` | `1440`        | Minimum package release age in minutes for pnpm; `0` disables the check.   |
 | `timeout-minutes`     | `60`          | Stop Pi after this many minutes.                                           |

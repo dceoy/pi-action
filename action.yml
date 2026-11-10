@@ -23,7 +23,7 @@ inputs:
   pi-version:
     required: false
     description: Version of @earendil-works/pi-coding-agent to install (e.g., 1.5.2 or latest)
-    default: 1.5.2
+    default: latest
   node-version:
     required: false
     description: Node.js version used to run Pi
