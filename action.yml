@@ -20,18 +20,6 @@ inputs:
     required: false
     description: Comma-separated allowlist of tool names (e.g., read,grep,find,ls for a read-only run). Empty uses Pi's default tools.
     default: ''
-  pi-version:
-    required: false
-    description: Version of @earendil-works/pi-coding-agent to install (e.g., 1.5.2 or latest)
-    default: latest
-  node-version:
-    required: false
-    description: Node.js version used to run Pi
-    default: '24'
-  minimum-release-age:
-    required: false
-    description: Minimum age in minutes for packages installed by pnpm; set to 0 to disable
-    default: '1440'
   pr-loop-ref:
     required: false
     description: Full immutable pr-loop commit SHA supplying the skills
@@ -40,28 +28,13 @@ inputs:
     required: false
     description: Maximum minutes to let Pi run before it is killed (uses 'timeout'/'gtimeout' when available; otherwise runs without an enforced timeout).
     default: '60'
-outputs:
-  pi-version:
-    description: Pi version installed for this run.
-    value: ${{ steps.install.outputs.pi-version }}
 runs:
   using: composite
   steps:
-    - name: Set up pnpm and Node.js
-      uses: pnpm/setup@fa36a5ef7dcdefc3a7cb25655c122e00cf6e636e  # v3.1.2
-      with:
-        version: latest
-        runtime: node@${{ inputs.node-version }}
-        install: false
     - name: Install Pi
-      id: install
       shell: bash -euo pipefail {0}
-      env:
-        PI_VERSION: ${{ inputs.pi-version }}
-        PNPM_CONFIG_MINIMUM_RELEASE_AGE: ${{ inputs.minimum-release-age }}
       run: |
-        pnpm add --global --ignore-scripts "@earendil-works/pi-coding-agent@${PI_VERSION#v}"
-        echo "pi-version=$(pi --version)" | tee -a "${GITHUB_OUTPUT}"
+        curl -fsSL https://pi.dev/install.sh | sh
     - name: Run Pi
       shell: bash -euo pipefail {0}
       env:
@@ -74,6 +47,7 @@ runs:
         PR_LOOP_INSTALL_TOKEN: ${{ github.token }}
         RUNNER_TEMP: ${{ runner.temp }}
       run: |
+        export PATH="${PI_CODING_AGENT_DIR:-${HOME}/.pi/agent}/bin:${PATH}"
         if [[ -z "${PROMPT}" ]]; then
           echo "::error::The 'prompt' input is required." >&2
           exit 1
