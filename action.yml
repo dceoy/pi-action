@@ -76,5 +76,5 @@ runs:
         if [[ -n "${MODEL}" ]]; then cmd+=(--model "${MODEL}"); fi
         if [[ -n "${THINKING}" ]]; then cmd+=(--thinking "${THINKING}"); fi
         if [[ -n "${TOOLS}" ]]; then cmd+=(--tools "${TOOLS}"); fi
-        # Pi waits for piped stdin in print mode; never let it block on the runner.
-        "${cmd[@]}" -- "${PROMPT}" < /dev/null
+        # Send the prompt on stdin so Pi never parses it as an option or @file.
+        printf '%s' "${PROMPT}" | "${cmd[@]}"
