@@ -54,7 +54,7 @@ Pi reads provider credentials from the environment (for example `ANTHROPIC_API_K
 | `pr-loop-ref`     | Pinned SHA    | Full commit SHA of the pr-loop skills to install.                          |
 | `timeout-minutes` | `60`          | Stop Pi after this many minutes.                                           |
 
-Each run installs the latest Pi using the [official installer](https://pi.dev/docs/latest/quickstart).
+Each run installs the latest Pi using the [official installer](https://pi.dev/docs/latest/quickstart), so the Pi version is not pinned even when this action is pinned to a commit. The installer needs `curl` and Node.js 22.19.0 or newer with npm on the runner; the action does not set up Node.js.
 
 Each run installs the four [pr-loop skills](https://github.com/dceoy/pr-loop) at the pinned commit into a temporary directory and makes them available to Pi. The runner needs GitHub CLI with `gh skill` support and access to the repository.
 
