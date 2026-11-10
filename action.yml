@@ -43,15 +43,12 @@ outputs:
 runs:
   using: composite
   steps:
-    - name: Set up Node.js
-      uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1  # v7.1.0
+    - name: Set up pnpm and Node.js
+      uses: pnpm/setup@fa36a5ef7dcdefc3a7cb25655c122e00cf6e636e  # v3.1.2
       with:
-        node-version: ${{ inputs.node-version }}
-    - name: Set up pnpm
-      uses: pnpm/action-setup@fc06bc1257f339d1d5d8b3a19a8cae5388b55320  # v4.4.0
-      with:
-        version: 11
-        run_install: false
+        version: 12
+        runtime: node@${{ inputs.node-version }}
+        install: false
     - name: Install Pi
       id: install
       shell: bash -euo pipefail {0}
