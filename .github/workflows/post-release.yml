@@ -1,0 +1,72 @@
+---
+name: Post-release
+on:
+  release:
+    types:
+      - released
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  tag:
+    permissions:
+      contents: write
+    uses: dceoy/gha-for-devops/.github/workflows/github-major-version-tag.yml@main  # zizmor: ignore[unpinned-uses]
+  release-pins:
+    permissions:
+      contents: write
+      pull-requests: write
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+        with:
+          ref: ${{ github.event.repository.default_branch }}
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Resolve release
+        id: release
+        env:
+          EVENT_TAG: ${{ github.event.release.tag_name }}
+          GH_TOKEN: ${{ secrets.GH_TOKEN || github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ -n "${EVENT_TAG}" ]]; then
+            tag="${EVENT_TAG}"
+          else
+            tag="$(gh release view --repo "${GITHUB_REPOSITORY}" --json tagName --jq '.tagName')"
+          fi
+          [[ -n "${tag}" ]] || { echo 'No release tag found' >&2; exit 1; }
+          echo "tag=${tag}" >> "${GITHUB_OUTPUT}"
+      - name: Update README release pin
+        env:
+          RELEASE_TAG: ${{ steps.release.outputs.tag }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          release_sha="$(git rev-parse "${RELEASE_TAG}^{commit}")"
+          python3 - "${release_sha}" "${RELEASE_TAG}" <<'PY'
+          import re
+          import sys
+          from pathlib import Path
+
+          sha, tag = sys.argv[1:]
+          path = Path("README.md")
+          body = path.read_text()
+          pattern = r"(uses: dceoy/pi-action@)(?:main|[0-9a-f]{40})(?:[ \t]+#[^\n]*)?"
+          body, count = re.subn(pattern, lambda m: m[1] + sha + "  # " + tag, body)
+          if count != 1:
+              raise SystemExit(f"Expected one action reference in README.md; found {count}")
+          path.write_text(body)
+          PY
+      - name: Create pull request
+        uses: peter-evans/create-pull-request@15733dbdfeedb4f7fdb73d13c6f5ac83b710fab8  # v8.1.2
+        with:
+          token: ${{ secrets.GH_TOKEN || github.token }}  # zizmor: ignore[secrets-outside-env]
+          commit-message: Update release pin for ${{ steps.release.outputs.tag }}
+          title: Update release pin for ${{ steps.release.outputs.tag }}
+          branch: github-actions/release-pins
+          base: ${{ github.event.repository.default_branch }}
+          body: Pin the README's Pi Action reference to the ${{ steps.release.outputs.tag }} release commit.
+          delete-branch: true
