@@ -1,0 +1,96 @@
+---
+name: Pi PR loop (OpenRouter)
+on:
+  workflow_call:
+    inputs:
+      model:
+        required: false
+        type: string
+        description: OpenRouter model to use with Pi
+        default: openrouter/openrouter/auto
+      timeout-minutes:
+        required: false
+        type: number
+        description: Maximum minutes allowed for the PR loop
+        default: 60
+      runs-on:
+        required: false
+        type: string
+        description: GitHub Actions runner
+        default: ubuntu-latest
+    secrets:
+      OPENROUTER_API_KEY:
+        required: true
+        description: OpenRouter API key
+      GH_TOKEN:
+        required: false
+        description: Optional GitHub token that can trigger CI on pushed fixes
+  pull_request:
+    types:
+      - opened
+      - ready_for_review
+permissions: {}
+jobs:
+  pi-pr-loop:
+    if: >-
+      github.event_name == 'pull_request'
+      && contains(fromJSON('["OWNER","MEMBER","COLLABORATOR"]'), github.event.pull_request.author_association)
+      && github.event.pull_request.head.repo.full_name == github.repository
+      && (! github.event.pull_request.draft)
+      && github.event.pull_request.user.type != 'Bot'
+    runs-on: ${{ inputs.runs-on || 'ubuntu-latest' }
+    timeout-minutes: ${{ inputs.timeout-minutes || 60 }
+    concurrency:
+      group: pi-pr-loop-${{ github.repository }-${{ github.event.pull_request.number }
+      cancel-in-progress: false
+    permissions:
+      contents: write
+      pull-requests: write
+      issues: write
+      actions: read
+      checks: read
+      statuses: read
+    steps:
+      - name: Checkout trusted base branch
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+        with:
+          ref: ${{ github.event.pull_request.base.ref }
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Verify OpenRouter credential
+        shell: bash
+        env:
+          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }
+        run: |
+          if [[ -z "${OPENROUTER_API_KEY}" ]]; then
+            echo "::error::Configure the OPENROUTER_API_KEY Actions secret." >&2
+            exit 1
+          fi
+      - name: Configure authenticated Git operations
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GH_TOKEN || github.token }
+        run: |
+          gh auth setup-git --hostname github.com
+          git config --global user.name 'github-actions[bot]'
+          git config --global user.email '41898282+github-actions[bot]@users.noreply.github.com'
+      - name: Run Pi PR loop
+        uses: $/.  # nosemgrep: yaml.github-actions.security.github-actions-mutable-action-tag.github-actions-mutable-action-tag
+        env:
+          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }
+          GH_TOKEN: ${{ secrets.GH_TOKEN || github.token }
+          GITHUB_TOKEN: ${{ secrets.GH_TOKEN || github.token }
+        with:
+          model: ${{ inputs.model || 'openrouter/openrouter/auto' }
+          tools: read,bash,edit,write
+          timeout-minutes: ${{ inputs.timeout-minutes || 60 }
+          prompt: >-
+            Use the installed pr-loop skill to review, triage, and reconcile only
+            ${{ github.event.pull_request.html_url }.
+            Its event head SHA is ${{ github.event.pull_request.head.sha }.
+            Verify the PR identity and current head before taking action; if
+            the head already differs from this event snapshot, stop without
+            modifying the PR. Follow the skill's review/triage entry rules and
+            revalidate base and head around every mutation. Do not merge the
+            pull request or bypass branch protections. Report the final status,
+            reviewed SHAs, outstanding feedback, and CI results.
