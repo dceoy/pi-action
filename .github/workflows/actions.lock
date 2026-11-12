@@ -6,6 +6,8 @@ workflows:
     '.github/workflows/ci.yml': []
     '.github/workflows/claude.yml': []
     '.github/workflows/codeql.yml': []
+    '.github/workflows/pi-review.yml':
+        - 'actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1'
     '.github/workflows/post-release.yml':
         - 'actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1'
         - 'peter-evans/create-pull-request@3ffccacd46053766916f087ce41d627c0b8cf2d1'

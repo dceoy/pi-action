@@ -1,0 +1,97 @@
+---
+name: Pull request review using Pi
+on:
+  workflow_call:
+    inputs:
+      model:
+        required: false
+        type: string
+        description: Model to use with Pi (OpenRouter provider)
+        default: openrouter/openrouter/free
+      prompt:
+        required: false
+        type: string
+        description: Additional review focus
+        default: ''
+      thinking:
+        required: false
+        type: string
+        description: Pi thinking level
+        default: ''
+      timeout-minutes:
+        required: false
+        type: number
+        description: Maximum Pi execution time
+        default: 60
+      runs-on:
+        required: false
+        type: string
+        description: GitHub Actions runner
+        default: ubuntu-latest
+    secrets:
+      OPENROUTER_API_KEY:
+        required: true
+        description: OpenRouter API key
+  pull_request_target:  # zizmor: ignore[dangerous-triggers] -- runs base workflow/action and checks out only the base SHA
+    types:
+      - opened
+      - ready_for_review
+permissions: {}
+jobs:
+  pi-review:
+    if: >-
+      github.event_name == 'pull_request_target'
+      && contains(fromJSON('["OWNER","MEMBER","COLLABORATOR"]'), github.event.pull_request.author_association)
+      && github.event.pull_request.head.repo.full_name == github.repository
+      && (! github.event.pull_request.draft)
+      && github.event.pull_request.user.type != 'Bot'
+    runs-on: ${{ inputs.runs-on || 'ubuntu-latest' }}
+    timeout-minutes: ${{ inputs.timeout-minutes || 60 }}
+    concurrency:
+      group: pi-review-${{ github.repository }}-${{ github.event.pull_request.number }}
+      cancel-in-progress: false
+    permissions:
+      contents: read
+      pull-requests: write
+      issues: read
+      actions: read
+    steps:
+      - name: Checkout trusted base commit  # nosemgrep: yaml.github-actions.security.pull-request-target-code-checkout.pull-request-target-code-checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+        with:
+          ref: ${{ github.event.pull_request.base.sha }}
+          fetch-depth: 1
+          persist-credentials: false
+      - name: Check OpenRouter secret
+        shell: bash
+        env:
+          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+        run: |
+          if [[ -z "${OPENROUTER_API_KEY}" ]]; then
+            echo "::error::Configure the OPENROUTER_API_KEY Actions secret." >&2
+            exit 1
+          fi
+      - name: Review pull request using Pi
+        uses: $/.  # nosemgrep: yaml.github-actions.security.github-actions-mutable-action-tag.github-actions-mutable-action-tag
+        env:
+          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+          GH_TOKEN: ${{ github.token }}
+          GITHUB_TOKEN: ${{ github.token }}
+          PR_REVIEW_URL: ${{ github.event.pull_request.html_url }}
+          PR_REVIEW_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        with:
+          model: ${{ inputs.model || 'openrouter/openrouter/free' }}
+          thinking: ${{ inputs.thinking }}
+          review-only: 'true'
+          timeout-minutes: ${{ inputs.timeout-minutes || 60 }}
+          prompt: >-
+            Use only the installed pr-review Skill and its references to review
+            ${{ github.event.pull_request.html_url }} at the exact event head
+            ${{ github.event.pull_request.head.sha }}.
+            Freeze and verify base/head; analyze only this snapshot.
+            Publish exactly one verified COMMENT review tied to the frozen head,
+            with inline comments on changed lines when appropriate.
+            Never edit files, push commits, approve, request changes, merge, or
+            modify PR state beyond review comments. If commit-bound publication
+            is unavailable or mandatory validation fails, return unsupported.
+            Additional review focus: ${{ inputs.prompt || 'Security, correctness and regressions.' }}
