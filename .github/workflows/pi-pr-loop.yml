@@ -7,7 +7,7 @@ on:
         required: false
         type: string
         description: OpenRouter model to use with Pi
-        default: openrouter/openrouter/auto
+        default: openrouter/openrouter/free
       timeout-minutes:
         required: false
         type: number
@@ -81,7 +81,7 @@ jobs:
           GH_TOKEN: ${{ secrets.GH_TOKEN || github.token }}
           GITHUB_TOKEN: ${{ secrets.GH_TOKEN || github.token }}
         with:
-          model: ${{ inputs.model || 'openrouter/openrouter/auto' }}
+          model: ${{ inputs.model || 'openrouter/openrouter/free' }}
           tools: read,bash,edit,write
           timeout-minutes: ${{ inputs.timeout-minutes || 60 }}
           prompt: >-
