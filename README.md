@@ -47,7 +47,7 @@ Pi reads provider credentials from the environment (for example `ANTHROPIC_API_K
 
 The [Pi PR loop workflow](.github/workflows/pi-pr-loop.yml) runs the pinned [`pr-loop` Skill](https://github.com/dceoy/pr-loop) when a non-draft, non-bot pull request is opened or marked ready for review. It only accepts pull requests from the same repository whose authors are owners, members, or collaborators. Forks and arbitrary comment triggers are excluded.
 
-Add `OPENROUTER_API_KEY` to **Settings → Secrets and variables → Actions**. The default Pi model is `openrouter/openrouter/auto`; reusable callers can override it with another `openrouter/<model-id>`. The workflow runs `pr-loop` (review, feedback triage, and reconciliation), **not** just the `pr-review` Skill. This can commit fixes and publish PR reviews; it never merges.
+Add `OPENROUTER_API_KEY` to **Settings → Secrets and variables → Actions**. The default Pi model is `openrouter/openrouter/free` (OpenRouter's no-credit free router). Free usage is rate-limited and model selection varies; reusable callers can override it with a specific `openrouter/<model-id>` if more reliable performance is needed. The workflow runs `pr-loop` (review, feedback triage, and reconciliation), **not** just the `pr-review` Skill. This can commit fixes and publish PR reviews; it never merges.
 
 The workflow uses a trusted base-branch checkout, a SHA-pinned checkout action, a pinned pr-loop Skill (via `action.yml`), and a GitHub CLI credential helper instead of storing the token in the checkout. Permissions are limited to the operations required by the full loop. The job does not run on `synchronize`, so automated fix commits cannot trigger another loop through this workflow.
 
