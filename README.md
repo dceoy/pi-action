@@ -116,15 +116,15 @@ Do not send confidential code or personal data.
 
 ## Inputs
 
-| Input | Default | Description |
-| --- | --- | --- |
-| `prompt` | Required | Instruction for Pi. |
-| `model` | Pi default | `provider/model` identifier. |
-| `thinking` | Model default | `off`, `minimal`, `low`, `medium`, `high`, `xhigh`, or `max`. |
-| `tools` | Pi default | Comma-separated allowlist, e.g. `read,grep,find,ls`. |
-| `pr-loop-ref` | Pinned SHA | Commit supplying the pr-loop skills. |
-| `review-only` | `false` | Install only `pr-review`; requires PR URL and head SHA. |
-| `timeout-minutes` | `60` | Maximum execution time in minutes. |
+| Input             | Default       | Description                                                   |
+| ----------------- | ------------- | ------------------------------------------------------------- |
+| `prompt`          | Required      | Instruction for Pi.                                           |
+| `model`           | Pi default    | `provider/model` identifier.                                  |
+| `thinking`        | Model default | `off`, `minimal`, `low`, `medium`, `high`, `xhigh`, or `max`. |
+| `tools`           | Pi default    | Comma-separated allowlist, e.g. `read,grep,find,ls`.          |
+| `pr-loop-ref`     | Pinned SHA    | Commit supplying the pr-loop skills.                          |
+| `review-only`     | `false`       | Install only `pr-review`; requires PR URL and head SHA.       |
+| `timeout-minutes` | `60`          | Maximum execution time in minutes.                            |
 
 ## Runtime and tests
 
