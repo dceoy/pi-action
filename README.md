@@ -99,13 +99,12 @@ jobs:
 Optional `with` inputs: `model`, `prompt` (review focus), `thinking`,
 `timeout-minutes`, and `runs-on`. The chosen provider's API key is required.
 
-Reviews run only for non-draft, non-bot, same-repository PRs from `OWNER`,
-`MEMBER`, or `COLLABORATOR`. Fork PRs are skipped. Use `pull_request` to review trusted same-repository PRs.
+Reviews run only for non-draft, non-bot, same-repository PRs from
+`OWNER`, `MEMBER`, or `COLLABORATOR`; forks are skipped.
 
-With `pull_request`, the workflow definition comes from the PR merge commit.
-Trusted same-repository authors can change that definition before it runs with
-provider secrets and a write-scoped token; the job guard and base-SHA checkout
-do not prevent this. Restrict who can write to repositories using this workflow.
+**Security:** `pull_request` executes PR-modified workflow YAML with secrets and
+write access for trusted contributors. Limit repository write access; checking
+out the base SHA does not prevent workflow modification.
 
 Review-only mode checks out the trusted base commit without saved credentials.
 It installs only the pinned skill, disables extension discovery, and limits Pi tools
