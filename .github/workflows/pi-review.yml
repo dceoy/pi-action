@@ -6,8 +6,8 @@ on:
       model:
         required: false
         type: string
-        description: Model to use with Pi (OpenRouter provider)
-        default: openrouter/anthropic/claude-sonnet-4.6
+        description: Model to use with Pi, in provider/model format
+        default: google/gemini-4-hydrogen
       prompt:
         required: false
         type: string
@@ -29,9 +29,12 @@ on:
         description: GitHub Actions runner
         default: ubuntu-latest
     secrets:
-      OPENROUTER_API_KEY:
+      GEMINI_API_KEY:
         required: true
-        description: OpenRouter API key
+        description: Google Gemini API key
+      OPENROUTER_API_KEY:
+        required: false
+        description: OpenRouter API key for openrouter model overrides
   pull_request_target:  # zizmor: ignore[dangerous-triggers] -- runs base workflow/action and checks out only the base SHA
     types:
       - opened
@@ -62,25 +65,38 @@ jobs:
           ref: ${{ github.event.pull_request.base.sha }}
           fetch-depth: 1
           persist-credentials: false
-      - name: Check OpenRouter secret
+      - name: Check model provider secret
         shell: bash
         env:
+          MODEL: ${{ inputs.model || 'google/gemini-4-hydrogen' }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
         run: |
-          if [[ -z "${OPENROUTER_API_KEY}" ]]; then
-            echo "::error::Configure the OPENROUTER_API_KEY Actions secret." >&2
-            exit 1
-          fi
+          case "${MODEL}" in
+            google/*)
+              if [[ -z "${GEMINI_API_KEY}" ]]; then
+                echo "::error::Configure the GEMINI_API_KEY Actions secret." >&2
+                exit 1
+              fi
+              ;;
+            openrouter/*)
+              if [[ -z "${OPENROUTER_API_KEY}" ]]; then
+                echo "::error::Configure the OPENROUTER_API_KEY Actions secret." >&2
+                exit 1
+              fi
+              ;;
+          esac
       - name: Review pull request using Pi
         uses: $/.  # nosemgrep: yaml.github-actions.security.github-actions-mutable-action-tag.github-actions-mutable-action-tag
         env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
           GH_TOKEN: ${{ github.token }}
           GITHUB_TOKEN: ${{ github.token }}
           PR_REVIEW_URL: ${{ github.event.pull_request.html_url }}
           PR_REVIEW_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
         with:
-          model: ${{ inputs.model || 'openrouter/anthropic/claude-sonnet-4.6' }}
+          model: ${{ inputs.model || 'google/gemini-4-hydrogen' }}
           thinking: ${{ inputs.thinking }}
           review-only: 'true'
           timeout-minutes: ${{ inputs.timeout-minutes || 60 }}
