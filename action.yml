@@ -67,4 +67,5 @@ runs:
         REVIEW_ONLY: ${{ inputs.review-only }}
         PR_LOOP_INSTALL_TOKEN: ${{ github.token }}
         RUNNER_TEMP: ${{ runner.temp }}
-      run: '"${{ github.action_path }}/scripts/run-pi.sh"'
+        ACTION_PATH: ${{ github.action_path }}
+      run: '"$ACTION_PATH/scripts/run-pi.sh"'
