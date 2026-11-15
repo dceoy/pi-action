@@ -7,7 +7,7 @@ on:
         required: false
         type: string
         description: Model to use with Pi, in provider/model format
-        default: google/gemini-4-hydrogen
+        default: openrouter/thinkingmachines/inkling-2-small:free
       prompt:
         required: false
         type: string
@@ -68,7 +68,7 @@ jobs:
       - name: Check model provider secret
         shell: bash
         env:
-          MODEL: ${{ inputs.model || 'google/gemini-4-hydrogen' }}
+          MODEL: ${{ inputs.model || 'openrouter/thinkingmachines/inkling-2-small:free' }}
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
         run: |
@@ -96,7 +96,7 @@ jobs:
           PR_REVIEW_URL: ${{ github.event.pull_request.html_url }}
           PR_REVIEW_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
         with:
-          model: ${{ inputs.model || 'google/gemini-4-hydrogen' }}
+          model: ${{ inputs.model || 'openrouter/thinkingmachines/inkling-2-small:free' }}
           thinking: ${{ inputs.thinking }}
           review-only: 'true'
           timeout-minutes: ${{ inputs.timeout-minutes || 60 }}
