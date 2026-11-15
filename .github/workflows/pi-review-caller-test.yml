@@ -1,0 +1,19 @@
+---
+name: Pi review caller (test)
+on:
+  pull_request_target:
+    types:
+      - opened
+      - ready_for_review
+permissions: {}
+jobs:
+  call-pi-review:
+    permissions:
+      contents: read
+      pull-requests: write
+      issues: read
+      actions: read
+    uses: ./.github/workflows/pi-review.yml
+    secrets:
+      GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}  # zizmor: ignore[secrets-outside-env]
+      OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}  # zizmor: ignore[secrets-outside-env]
