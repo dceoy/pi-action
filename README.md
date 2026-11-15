@@ -57,7 +57,7 @@ Uses `openrouter/thinkingmachines/inkling-2-small:free` by default.
 ```yaml
 name: Pi review (OpenRouter)
 on:
-  pull_request_target:
+  pull_request:
     types: [opened, ready_for_review]
 permissions:
   contents: read
@@ -78,7 +78,7 @@ Selects `google/gemini-4-hydrogen` with `GEMINI_API_KEY`.
 ```yaml
 name: Pi review (Gemini)
 on:
-  pull_request_target:
+  pull_request:
     types: [opened, ready_for_review]
 permissions:
   contents: read
@@ -100,8 +100,7 @@ Optional `with` inputs: `model`, `prompt` (review focus), `thinking`,
 `timeout-minutes`, and `runs-on`. The chosen provider's API key is required.
 
 Reviews run only for non-draft, non-bot, same-repository PRs from `OWNER`,
-`MEMBER`, or `COLLABORATOR`. Fork PRs and `pull_request` callers are skipped.
-`pull_request_target` uses the base-branch workflow, so changes take effect after merge.
+`MEMBER`, or `COLLABORATOR`. Fork PRs are skipped. Use `pull_request` to review trusted same-repository PRs.
 
 Review-only mode checks out the trusted base commit without saved credentials.
 It installs only the pinned skill, disables extension discovery, and limits Pi tools
