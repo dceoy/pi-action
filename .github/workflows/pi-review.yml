@@ -35,7 +35,7 @@ on:
       OPENROUTER_API_KEY:
         required: false
         description: OpenRouter API key for openrouter model overrides
-  pull_request_target:  # zizmor: ignore[dangerous-triggers] -- runs base workflow/action and checks out only the base SHA
+  pull_request:
     types:
       - opened
       - ready_for_review
@@ -43,7 +43,7 @@ permissions: {}
 jobs:
   pi-review:
     if: >-
-      github.event_name == 'pull_request_target'
+      github.event_name == 'pull_request'
       && contains(fromJSON('["OWNER","MEMBER","COLLABORATOR"]'), github.event.pull_request.author_association)
       && github.event.pull_request.head.repo.full_name == github.repository
       && (! github.event.pull_request.draft)
@@ -59,7 +59,7 @@ jobs:
       issues: read
       actions: read
     steps:
-      - name: Checkout trusted base commit  # nosemgrep: yaml.github-actions.security.pull-request-target-code-checkout.pull-request-target-code-checkout
+      - name: Checkout trusted base commit
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
         with:
           ref: ${{ github.event.pull_request.base.sha }}
