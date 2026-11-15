@@ -45,22 +45,24 @@ jobs:
 
 Pi reads provider credentials from the environment (for example `ANTHROPIC_API_KEY`, `OPENAI_API_KEY`, or `GEMINI_API_KEY`). Run `pi --help` for the full list. Pi's response is written to the step log.
 
-## Automated PR reviews with Gemini
+## Automated PR reviews with OpenRouter
 
 The reusable [`pi-review.yml`](.github/workflows/pi-review.yml) is modeled on [`opencode-review.yml`](https://github.com/dceoy/opencode-action/blob/main/.github/workflows/opencode-review.yml). When a trusted pull request is opened or marked ready for review, it runs only the pinned [`pr-review` Skill](https://github.com/dceoy/pr-loop/tree/main/skills/pr-review). It does not run `pr-loop`, triage feedback, push changes, or merge PRs.
 
 ### Setup
 
-- Set `GEMINI_API_KEY` in **Settings → Secrets and variables → Actions**.
+- Set `OPENROUTER_API_KEY` in **Settings → Secrets and variables → Actions**.
 - Call the workflow from a `pull_request_target` workflow. A caller triggered by `pull_request` is skipped.
 - Pin the reusable workflow to a released commit SHA once available.
 
 ### Options
 
-- The default model is `google/gemini-4-hydrogen`.
-- Override `model` as needed, for example with `openrouter/<model-id>` (requires `OPENROUTER_API_KEY`).
+- The default model is `openrouter/thinkingmachines/inkling-2-small:free`.
+- Override `model` as needed, for example with `google/gemini-4-hydrogen` (requires `GEMINI_API_KEY`).
 - Both API key secrets are optional at the interface level. At runtime, the key for the selected provider is required.
 - Other `workflow_call` inputs: `prompt` (extra review focus), `thinking`, `timeout-minutes`, and `runs-on`.
+
+The default free Inkling endpoint logs prompts and outputs for model improvement. Do not send confidential code or personal data.
 
 ### Behavior
 
