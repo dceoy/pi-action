@@ -8,11 +8,6 @@ inputs:
   prompt:
     required: true
     description: Prompt to send to Pi in non-interactive print mode
-  pi-version:
-    required: false
-    description: Exact Pi version to install, or latest to use the official installer
-    # npm package: @earendil-works/pi-coding-agent
-    default: '1.5.2'
   model:
     required: false
     description: Model to use, in provider/model format (e.g., anthropic/claude-opus-5). Empty uses Pi's default model.
@@ -40,21 +35,10 @@ inputs:
 runs:
   using: composite
   steps:
-    # Exact semver validation and the default pin replace a lockfile for this user-selectable CLI.
-    - name: Install Pi  # zizmor: ignore[adhoc-packages]
+    - name: Install Pi
       shell: bash -euo pipefail {0}
-      env:
-        PI_VERSION: ${{ inputs.pi-version }}
       run: |
-        if [[ "${PI_VERSION}" == "latest" ]]; then
-          curl -fsSL https://pi.dev/install.sh | sh
-        elif [[ "${PI_VERSION}" =~ ^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)(-((0|[1-9][0-9]*|[0-9]*[a-zA-Z-][0-9a-zA-Z-]*)(\.(0|[1-9][0-9]*|[0-9]*[a-zA-Z-][0-9a-zA-Z-]*))*))?(\+[0-9a-zA-Z-]+(\.[0-9a-zA-Z-]+)*)?$ ]]; then
-          # An exact, validated version is intentional; callers may override the default pin.
-          npm install -g --ignore-scripts "@earendil-works/pi-coding-agent@${PI_VERSION}"
-        else
-          echo "::error::pi-version must be an exact semver or latest." >&2
-          exit 1
-        fi
+        curl -fsSL https://pi.dev/install.sh | sh
     - name: Run Pi
       shell: bash -euo pipefail {0}
       env:
