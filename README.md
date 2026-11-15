@@ -1,5 +1,7 @@
 # pi-action
 
+[![CI](https://github.com/dceoy/pi-action/actions/workflows/ci.yml/badge.svg)](https://github.com/dceoy/pi-action/actions/workflows/ci.yml)
+
 Run the [Pi](https://github.com/earendil-works/pi) coding agent from GitHub Actions in non-interactive print mode (`pi --print`).
 
 ## Quick start
@@ -60,6 +62,7 @@ The composite action's `review-only: 'true'` mode loads only `pr-review` at the 
 | Input             | Default       | Description                                                                |
 | ----------------- | ------------- | -------------------------------------------------------------------------- |
 | `prompt`          | Required      | Prompt to send to Pi.                                                      |
+| `pi-version`      | `1.5.2`       | Exact Pi version; `latest` opts into the official installer.               |
 | `model`           | Pi default    | Model in `provider/model` format.                                          |
 | `thinking`        | Model default | Thinking level: `off`, `minimal`, `low`, `medium`, `high`, `xhigh`, `max`. |
 | `tools`           | Pi default    | Comma-separated tool allowlist, e.g. `read,grep,find,ls` for read-only.    |
@@ -67,8 +70,12 @@ The composite action's `review-only: 'true'` mode loads only `pr-review` at the 
 | `review-only`     | `false`       | Install only pr-review; requires a PR URL and head SHA.                    |
 | `timeout-minutes` | `60`          | Stop Pi after this many minutes.                                           |
 
-Each run installs the latest Pi using the [official installer](https://pi.dev/docs/latest/quickstart), so the Pi version is not pinned even when this action is pinned to a commit. The installer needs `curl` and Node.js 22.19.0 or newer with npm on the runner; the action does not set up Node.js.
+By default, each run installs Pi `1.5.2` via npm with lifecycle scripts disabled. Set `pi-version` to another exact semver to override the pin, or to `latest` to use the [official installer](https://pi.dev/docs/latest/quickstart) (requires `curl`). The runner needs Node.js 22.19.0 or newer with npm; the action does not set up Node.js.
 
 Normal runs install the four [pr-loop skills](https://github.com/dceoy/pr-loop) at the pinned commit; review-only runs install just `pr-review` into a temporary directory and make it available to Pi. The runner needs GitHub CLI with `gh skill` support and access to the repository.
+
+## Local tests
+
+Run the offline regression suite with `bats tests/` (requires [Bats](https://github.com/bats-core/bats-core)). No Pi installation, network, or API keys are needed.
 
 Pi runs its tools (including `bash`) without a permission prompt, so grant the job only the permissions the task needs and do not pass untrusted text as `prompt`.
