@@ -1,0 +1,6 @@
+---
+paths:
+  .github/workflows/pi-review.yml:
+    ignore:
+      # actionlint 1.7.12 does not yet recognize GitHub's lockfile-local action syntax.
+      - 'specifying action "\$/\." in invalid format because ref is missing'
