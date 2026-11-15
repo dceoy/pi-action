@@ -1,0 +1,36 @@
+---
+name: OpenCode review
+on:
+  pull_request:
+    branches:
+      - main
+    types:
+      - opened
+      - ready_for_review
+    paths-ignore:
+      - .github/workflows/opencode.yml
+permissions:
+  contents: read
+jobs:
+  opencode-review:
+    if: >
+      github.event_name == 'pull_request'
+      && contains(fromJSON('["OWNER","MEMBER","COLLABORATOR"]'), github.event.pull_request.author_association)
+      && github.event.pull_request.head.repo.full_name == github.repository
+      && (! github.event.pull_request.draft)
+      && github.event.pull_request.user.type != 'Bot'
+      && (! startsWith(github.head_ref, 'dependabot/'))
+      && (! startsWith(github.head_ref, 'renovate/'))
+    concurrency:
+      group: ${{ github.workflow }}-opencode-review-${{ github.event.pull_request.number }}
+      cancel-in-progress: true
+    permissions:
+      contents: read
+      pull-requests: write
+      issues: write
+      id-token: write
+      actions: read
+    uses: dceoy/opencode-action/.github/workflows/opencode-review.yml@3fffa878be91b1b84f958696238b260961b96973  # v0.8.2
+    secrets:
+      OPENCODE_API_KEY: ${{ secrets.OPENCODE_API_KEY }}
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
