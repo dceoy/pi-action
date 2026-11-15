@@ -11,7 +11,7 @@ on:
 permissions:
   contents: read
 jobs:
-  test:
+  bats-test:
     if: >
       github.event_name == 'push'
       || github.event_name == 'pull_request'
@@ -53,7 +53,7 @@ jobs:
     if: >
       github.event_name == 'pull_request' && github.event.pull_request.user.login == 'dependabot[bot]'
     needs:
-      - test
+      - bats-test
       - github-actions-lint-and-scan
       - markdown-lint
       - shell-lint
