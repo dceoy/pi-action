@@ -1,7 +1,6 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-export PATH="${PI_CODING_AGENT_DIR:-${HOME}/.pi/agent}/bin:${PATH}"
 if [[ -z "${PROMPT}" ]]; then
   echo "::error::The 'prompt' input is required." >&2
   exit 1
@@ -10,14 +9,25 @@ if [[ ! "${PR_LOOP_REF}" =~ ^[[:xdigit:]]{40}$ ]]; then
   echo "::error::pr-loop-ref must be a full commit SHA." >&2
   exit 1
 fi
-pi_executable="$(command -v pi)"
+if [[ -n "${THINKING}" && ! "${THINKING}" =~ ^(off|minimal|low|medium|high|xhigh|max)$ ]]; then
+  echo "::error::thinking must be off, minimal, low, medium, high, xhigh, or max." >&2
+  exit 1
+fi
+if [[ ! "${TIMEOUT_MINUTES}" =~ ^[1-9][0-9]*$ ]]; then
+  echo "::error::timeout-minutes must be a positive integer." >&2
+  exit 1
+fi
 review_home=""
 if [[ "${REVIEW_ONLY}" == "true" ]]; then
-  if [[ ! "${PR_REVIEW_URL:-}" =~ ^https://github[.]com/[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+/pull/[0-9]+$ ]] ||
-     [[ ! "${PR_REVIEW_HEAD_SHA:-}" =~ ^[[:xdigit:]]{40}$ ]]; then
+  if [[ ! "${PR_REVIEW_URL:-}" =~ ^https://github[.]com/[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+/pull/[0-9]+$ ]] \
+    || [[ ! "${PR_REVIEW_HEAD_SHA:-}" =~ ^[[:xdigit:]]{40}$ ]]; then
     echo "::error::Review-only requires a GitHub PR URL and a frozen 40-hex-character head SHA." >&2
     exit 1
   fi
+fi
+export PATH="${PI_CODING_AGENT_DIR:-${HOME}/.pi/agent}/bin:${PATH}"
+pi_executable="$(command -v pi)"
+if [[ "${REVIEW_ONLY}" == "true" ]]; then
   review_home="$(mktemp -d "${RUNNER_TEMP%/}/pi-review.XXXXXXXX")"
   export HOME="${review_home}"
   export PI_CODING_AGENT_DIR="${review_home}/.pi/agent"
@@ -52,7 +62,7 @@ else
 fi
 cmd+=("${pi_executable}" --print --no-session)
 if [[ "${REVIEW_ONLY}" == "true" ]]; then
-  cmd+=(--no-extensions --no-skills --no-prompt-templates --tools read,bash)
+  cmd+=(--no-extensions --no-skills --no-prompt-templates --tools 'read,bash')
 fi
 for skill in "${skills[@]}"; do
   cmd+=(--skill "${skill_dir}/${skill}")
