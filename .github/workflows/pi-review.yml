@@ -30,7 +30,7 @@ on:
         default: ubuntu-latest
     secrets:
       GEMINI_API_KEY:
-        required: true
+        required: false
         description: Google Gemini API key
       OPENROUTER_API_KEY:
         required: false
