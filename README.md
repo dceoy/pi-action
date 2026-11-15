@@ -43,19 +43,41 @@ jobs:
           prompt: ${{ inputs.prompt }}
 ```
 
-Pi reads provider credentials from the environment (for example `ANTHROPIC_API_KEY`, `OPENAI_API_KEY`, or `GEMINI_API_KEY`); run `pi --help` for the full list. Pi's response is written to the step log.
+Pi reads provider credentials from the environment (for example `ANTHROPIC_API_KEY`, `OPENAI_API_KEY`, or `GEMINI_API_KEY`). Run `pi --help` for the full list. Pi's response is written to the step log.
 
 ## Automated PR reviews with Gemini
 
-The reusable [`pi-review.yml`](.github/workflows/pi-review.yml), modeled on [`opencode-review.yml`](https://github.com/dceoy/opencode-action/blob/main/.github/workflows/opencode-review.yml), runs **only** the pinned [`pr-review` Skill](https://github.com/dceoy/pr-loop/tree/main/skills/pr-review) when a trusted pull request is opened or marked ready for review. It does not run `pr-loop`, triage feedback, push changes, or merge PRs.
+The reusable [`pi-review.yml`](.github/workflows/pi-review.yml) is modeled on [`opencode-review.yml`](https://github.com/dceoy/opencode-action/blob/main/.github/workflows/opencode-review.yml). When a trusted pull request is opened or marked ready for review, it runs only the pinned [`pr-review` Skill](https://github.com/dceoy/pr-loop/tree/main/skills/pr-review). It does not run `pr-loop`, triage feedback, push changes, or merge PRs.
 
-Set `GEMINI_API_KEY` in **Settings → Secrets and variables → Actions**. The default model is `google/gemini-4-hydrogen` (Gemini 4 Hydrogen, released 2026-11-12), with a 1,048,576-token context window, up to 65,536 output tokens, and tool-call support ([models.dev](https://models.dev)). Pricing is $1.50 per million input tokens and $7.50 per million output tokens. Callers can override `model`, for example with an `openrouter/<model-id>` model that requires `OPENROUTER_API_KEY`. For `workflow_call`, both API key secrets are optional at the interface level; the runtime check requires the key matching the selected Google or OpenRouter provider. The workflow also accepts `prompt` (additional review focus), `thinking`, `timeout-minutes`, and `runs-on` for `workflow_call`. Call it from a `pull_request_target` workflow and supply the API key secret; pin the reusable workflow to a released commit SHA once available. A caller triggered by `pull_request` is skipped by the job guard.
+### Setup
 
-The workflow executes only for non-draft, non-bot, same-repository PRs authored by an `OWNER`, `MEMBER`, or `COLLABORATOR`; fork PRs and comment triggers are excluded. The `pull_request_target` trigger loads workflow and self-action definitions from the base branch. It checks out the event's **base commit**, not untrusted PR code, and does not persist Git credentials. The workflow can review PRs with this new action mode only after the action and workflow are merged into the base branch.
+- Set `GEMINI_API_KEY` in **Settings → Secrets and variables → Actions**.
+- Call the workflow from a `pull_request_target` workflow. A caller triggered by `pull_request` is skipped.
+- Pin the reusable workflow to a released commit SHA once available.
 
-The composite action's `review-only: 'true'` mode loads only `pr-review` at the pinned `pr-loop-ref` commit, isolates user configuration, disables extension/skill discovery, and forces Pi's `read,bash` tool selection. It requires `PR_REVIEW_URL` and `PR_REVIEW_HEAD_SHA` and instructs the agent to publish one verified commit-bound `COMMENT` review. The workflow grants `contents: read`, `pull-requests: write`, `issues: read`, and `actions: read`; no repository-write or OIDC permission is needed.
+### Options
 
-**Security boundary:** Pi's `bash` tool can still execute arbitrary shell commands, and `pull-requests: write` permits more than reviews at the GitHub API level. This is a review-only operational contract plus token permission reduction, **not** an operating-system sandbox or an API-level allowlist. Only run with trusted base-branch configuration. The normal composite-action mode still installs all four pr-loop skills and retains its prior functionality.
+- The default model is `google/gemini-4-hydrogen`.
+- Override `model` as needed, for example with `openrouter/<model-id>` (requires `OPENROUTER_API_KEY`).
+- Both API key secrets are optional at the interface level. At runtime, the key for the selected provider is required.
+- Other `workflow_call` inputs: `prompt` (extra review focus), `thinking`, `timeout-minutes`, and `runs-on`.
+
+### Behavior
+
+- It runs only for non-draft, non-bot, same-repository PRs authored by an `OWNER`, `MEMBER`, or `COLLABORATOR`. Fork PRs and comment triggers are excluded.
+- `pull_request_target` loads workflow definitions from the base branch, so the workflow works only after it is merged there.
+- It checks out the **base commit**, not untrusted PR code, and does not persist Git credentials.
+- `review-only: 'true'` loads only `pr-review` at the pinned `pr-loop-ref` commit.
+- It isolates user configuration, disables extension and skill discovery, and forces the `read,bash` tools.
+- It requires `PR_REVIEW_URL` and `PR_REVIEW_HEAD_SHA`, and publishes one verified, commit-bound `COMMENT` review.
+- Permissions: `contents: read`, `pull-requests: write`, `issues: read`, and `actions: read`. No repository-write or OIDC permission is needed.
+- Normal composite-action mode is unchanged and still installs all four pr-loop skills.
+
+**Security boundary:** This is a review-only contract with reduced token permissions. It is **not** an OS sandbox or an API-level allowlist.
+
+- Pi's `bash` tool can run arbitrary shell commands.
+- `pull-requests: write` allows more than reviews at the GitHub API level.
+- Use only trusted base-branch configuration.
 
 ## Inputs
 
@@ -69,12 +91,19 @@ The composite action's `review-only: 'true'` mode loads only `pr-review` at the 
 | `review-only`     | `false`       | Install only pr-review; requires a PR URL and head SHA.                    |
 | `timeout-minutes` | `60`          | Stop Pi after this many minutes.                                           |
 
-Each run installs the latest Pi using the [official installer](https://pi.dev/docs/latest/quickstart), so the Pi version is not pinned even when this action is pinned to a commit. The installer needs `curl` and Node.js 22.19.0 or newer with npm on the runner; the action does not set up Node.js.
+Each run installs the latest Pi with the [official installer](https://pi.dev/docs/latest/quickstart), so the Pi version is not pinned, even if the action is pinned to a commit.
 
-Normal runs install the four [pr-loop skills](https://github.com/dceoy/pr-loop) at the pinned commit; review-only runs install just `pr-review` into a temporary directory and make it available to Pi. The runner needs GitHub CLI with `gh skill` support and access to the repository.
+Requirements on the runner:
+
+- `curl`, and Node.js 22.19.0 or newer with npm (the action does not set up Node.js).
+- GitHub CLI with `gh skill` support, and access to the repository.
+
+Normal runs install the four [pr-loop skills](https://github.com/dceoy/pr-loop) at the pinned commit. Review-only runs install just `pr-review` into a temporary directory.
 
 ## Local tests
 
-Run the offline regression suite with `bats tests/` (requires [Bats](https://github.com/bats-core/bats-core)). No Pi installation, network, or API keys are needed.
+Run the offline regression suite with `bats tests/` (requires [Bats](https://github.com/bats-core/bats-core)). No Pi, network, or API keys are needed.
 
-Pi runs its tools (including `bash`) without a permission prompt, so grant the job only the permissions the task needs and do not pass untrusted text as `prompt`.
+## Security note
+
+Pi runs its tools (including `bash`) without a permission prompt. Grant the job only the permissions it needs, and do not pass untrusted text as `prompt`.
