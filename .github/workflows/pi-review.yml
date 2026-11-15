@@ -1,5 +1,5 @@
 ---
-name: Pull request review using Pi
+name: Pi review
 on:
   workflow_call:
     inputs:
