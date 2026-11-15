@@ -102,6 +102,11 @@ Optional `with` inputs: `model`, `prompt` (review focus), `thinking`,
 Reviews run only for non-draft, non-bot, same-repository PRs from `OWNER`,
 `MEMBER`, or `COLLABORATOR`. Fork PRs are skipped. Use `pull_request` to review trusted same-repository PRs.
 
+With `pull_request`, the workflow definition comes from the PR merge commit.
+Trusted same-repository authors can change that definition before it runs with
+provider secrets and a write-scoped token; the job guard and base-SHA checkout
+do not prevent this. Restrict who can write to repositories using this workflow.
+
 Review-only mode checks out the trusted base commit without saved credentials.
 It installs only the pinned skill, disables extension discovery, and limits Pi tools
 to `read,bash`. It verifies the PR URL and head SHA before posting one review.
