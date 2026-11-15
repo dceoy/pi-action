@@ -2,17 +2,12 @@
 
 [![CI](https://github.com/dceoy/pi-action/actions/workflows/ci.yml/badge.svg)](https://github.com/dceoy/pi-action/actions/workflows/ci.yml)
 
-Run the [Pi](https://github.com/earendil-works/pi) coding agent from GitHub Actions in non-interactive print mode (`pi --print`).
+Run [Pi](https://github.com/earendil-works/pi) in GitHub Actions using `pi --print`.
 
 ## Quick start
 
-### 1. Add a provider secret
-
-In **Settings → Secrets and variables → Actions**, add the API key for your model provider. The example below uses `ANTHROPIC_API_KEY`.
-
-### 2. Add the workflow
-
-Create `.github/workflows/pi.yml`:
+Add `ANTHROPIC_API_KEY` under **Settings → Secrets and variables → Actions**.
+Then create `.github/workflows/pi.yml`:
 
 <!-- prettier-ignore -->
 ```yaml
@@ -35,7 +30,7 @@ jobs:
         with:
           persist-credentials: false
       - name: Run Pi
-        uses: dceoy/pi-action@5c800f306333d382853eee3d9780830d3d4f3800  # unreleased (main snapshot, 2026-11-13)
+        uses: dceoy/pi-action@5c800f306333d382853eee3d9780830d3d4f3800  # pinned commit
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
         with:
@@ -43,69 +38,100 @@ jobs:
           prompt: ${{ inputs.prompt }}
 ```
 
-Pi reads provider credentials from the environment (for example `ANTHROPIC_API_KEY`, `OPENAI_API_KEY`, or `GEMINI_API_KEY`). Run `pi --help` for the full list. Pi's response is written to the step log.
+Pi reads provider keys from the environment. See `pi --help` for supported providers.
+Output appears in the job log.
 
 ## Automated PR reviews
 
-The reusable [`pi-review.yml`](.github/workflows/pi-review.yml) is modeled on [`opencode-review.yml`](https://github.com/dceoy/opencode-action/blob/main/.github/workflows/opencode-review.yml). When a trusted pull request is opened or marked ready for review, it runs only the pinned [`pr-review` Skill](https://github.com/dceoy/pr-loop/tree/main/skills/pr-review). It does not run `pr-loop`, triage feedback, push changes, or merge PRs.
+The reusable [`pi-review.yml`](.github/workflows/pi-review.yml) runs the pinned
+[`pr-review` skill](https://github.com/dceoy/pr-loop/tree/main/skills/pr-review).
+It posts commit-bound `COMMENT` reviews without editing code or merging PRs.
 
-### Setup
+Add `.github/workflows/pi-review.yml` to your repository. Set the selected provider's
+Actions secret. Replace `FULL_COMMIT_SHA` with a reviewed `dceoy/pi-action` commit SHA.
 
-- Set `OPENROUTER_API_KEY` in **Settings → Secrets and variables → Actions**.
-- Call the workflow from a `pull_request_target` workflow. A caller triggered by `pull_request` is skipped.
-- Pin the reusable workflow to a released commit SHA once available.
+### OpenRouter
 
-### Options
+Uses `openrouter/thinkingmachines/inkling-2-small:free` by default.
 
-- The default model is `openrouter/thinkingmachines/inkling-2-small:free`.
-- Override `model` as needed, for example with `google/gemini-4-hydrogen` (requires `GEMINI_API_KEY`).
-- Both API key secrets are optional at the interface level. At runtime, the key for the selected provider is required.
-- Other `workflow_call` inputs: `prompt` (extra review focus), `thinking`, `timeout-minutes`, and `runs-on`.
+```yaml
+name: Pi review (OpenRouter)
+on:
+  pull_request_target:
+    types: [opened, ready_for_review]
+permissions:
+  contents: read
+  pull-requests: write
+  issues: read
+  actions: read
+jobs:
+  review:
+    uses: dceoy/pi-action/.github/workflows/pi-review.yml@FULL_COMMIT_SHA
+    secrets:
+      OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+```
 
-The default free Inkling endpoint logs prompts and outputs for model improvement. Do not send confidential code or personal data.
+### Gemini
 
-### Behavior
+Selects `google/gemini-4-hydrogen` with `GEMINI_API_KEY`.
 
-- It runs only for non-draft, non-bot, same-repository PRs authored by an `OWNER`, `MEMBER`, or `COLLABORATOR`. Fork PRs and comment triggers are excluded.
-- `pull_request_target` loads workflow definitions from the base branch, so the workflow works only after it is merged there.
-- It checks out the **base commit**, not untrusted PR code, and does not persist Git credentials.
-- `review-only: 'true'` loads only `pr-review` at the pinned `pr-loop-ref` commit.
-- It isolates user configuration, disables extension and skill discovery, and forces the `read,bash` tools.
-- It requires `PR_REVIEW_URL` and `PR_REVIEW_HEAD_SHA`, and publishes one verified, commit-bound `COMMENT` review.
-- Permissions: `contents: read`, `pull-requests: write`, `issues: read`, and `actions: read`. No repository-write or OIDC permission is needed.
-- Normal composite-action mode is unchanged and still installs all four pr-loop skills.
+```yaml
+name: Pi review (Gemini)
+on:
+  pull_request_target:
+    types: [opened, ready_for_review]
+permissions:
+  contents: read
+  pull-requests: write
+  issues: read
+  actions: read
+jobs:
+  review:
+    uses: dceoy/pi-action/.github/workflows/pi-review.yml@FULL_COMMIT_SHA
+    with:
+      model: google/gemini-4-hydrogen
+    secrets:
+      GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+```
 
-**Security boundary:** This is a review-only contract with reduced token permissions. It is **not** an OS sandbox or an API-level allowlist.
+### Review settings
 
-- Pi's `bash` tool can run arbitrary shell commands.
-- `pull-requests: write` allows more than reviews at the GitHub API level.
-- Use only trusted base-branch configuration.
+Optional `with` inputs: `model`, `prompt` (review focus), `thinking`,
+`timeout-minutes`, and `runs-on`. The chosen provider's API key is required.
+
+Reviews run only for non-draft, non-bot, same-repository PRs from `OWNER`,
+`MEMBER`, or `COLLABORATOR`. Fork PRs and `pull_request` callers are skipped.
+`pull_request_target` uses the base-branch workflow, so changes take effect after merge.
+
+Review-only mode checks out the trusted base commit without saved credentials.
+It installs only the pinned skill, disables extension discovery, and limits Pi tools
+to `read,bash`. It verifies the PR URL and head SHA before posting one review.
+
+**Security:** These restrictions are not an OS sandbox or API allowlist.
+Pi can execute shell commands, and `pull-requests: write` permits more than reviews.
+Use only trusted workflows. Do not pass untrusted text as a prompt.
+
+OpenRouter's default free Inkling endpoint logs prompts and outputs for model improvement.
+Do not send confidential code or personal data.
 
 ## Inputs
 
-| Input             | Default       | Description                                                                |
-| ----------------- | ------------- | -------------------------------------------------------------------------- |
-| `prompt`          | Required      | Prompt to send to Pi.                                                      |
-| `model`           | Pi default    | Model in `provider/model` format.                                          |
-| `thinking`        | Model default | Thinking level: `off`, `minimal`, `low`, `medium`, `high`, `xhigh`, `max`. |
-| `tools`           | Pi default    | Comma-separated tool allowlist, e.g. `read,grep,find,ls` for read-only.    |
-| `pr-loop-ref`     | Pinned SHA    | Full commit SHA of the pr-loop skills to install.                          |
-| `review-only`     | `false`       | Install only pr-review; requires a PR URL and head SHA.                    |
-| `timeout-minutes` | `60`          | Stop Pi after this many minutes.                                           |
+| Input | Default | Description |
+| --- | --- | --- |
+| `prompt` | Required | Instruction for Pi. |
+| `model` | Pi default | `provider/model` identifier. |
+| `thinking` | Model default | `off`, `minimal`, `low`, `medium`, `high`, `xhigh`, or `max`. |
+| `tools` | Pi default | Comma-separated allowlist, e.g. `read,grep,find,ls`. |
+| `pr-loop-ref` | Pinned SHA | Commit supplying the pr-loop skills. |
+| `review-only` | `false` | Install only `pr-review`; requires PR URL and head SHA. |
+| `timeout-minutes` | `60` | Maximum execution time in minutes. |
 
-Each run installs the latest Pi with the [official installer](https://pi.dev/docs/latest/quickstart), so the Pi version is not pinned, even if the action is pinned to a commit.
+## Runtime and tests
 
-Requirements on the runner:
+The action installs the latest Pi on each run, even when pinned to a commit.
+The runner needs `curl`, Node.js 22.19+ with npm, and GitHub CLI with `gh skill`.
+Standard runs install four pinned [pr-loop skills](https://github.com/dceoy/pr-loop);
+review-only runs install only `pr-review`.
 
-- `curl`, and Node.js 22.19.0 or newer with npm (the action does not set up Node.js).
-- GitHub CLI with `gh skill` support, and access to the repository.
-
-Normal runs install the four [pr-loop skills](https://github.com/dceoy/pr-loop) at the pinned commit. Review-only runs install just `pr-review` into a temporary directory.
-
-## Local tests
-
-Run the offline regression suite with `bats tests/` (requires [Bats](https://github.com/bats-core/bats-core)). No Pi, network, or API keys are needed.
-
-## Security note
-
-Pi runs its tools (including `bash`) without a permission prompt. Grant the job only the permissions it needs, and do not pass untrusted text as `prompt`.
+Run offline tests with `bats tests/` ([Bats](https://github.com/bats-core/bats-core)).
+No Pi, network access, or API key is needed.
