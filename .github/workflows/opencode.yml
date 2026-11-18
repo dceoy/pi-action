@@ -9,8 +9,7 @@ on:
       - ready_for_review
     paths-ignore:
       - .github/workflows/opencode.yml
-permissions:
-  contents: read
+permissions: {}
 jobs:
   opencode-review:
     if: >
