@@ -188,12 +188,27 @@ assert_cleaned_up() {
   assert_invalid
 }
 
+@test "Sakura rejects models without tool calls in normal mode" {
+  export MODEL=sakura/llm-jp-3.1-8x13b-instruct4 SAKURA_AI_ENGINE_API_KEY=dummy-secret
+  run_pi
+  assert_invalid
+  [[ "${output}" == *"does not support tool calls"*"always runs Pi with tools"* ]]
+}
+
+@test "Sakura rejects models without tool calls in review-only mode" {
+  review_target
+  export MODEL=sakura/preview/Qwen3-VL-30B-A3B-Instruct SAKURA_AI_ENGINE_API_KEY=dummy-secret
+  run_pi
+  assert_invalid
+  [[ "${output}" == *"does not support tool calls"*"always runs Pi with tools"* ]]
+}
+
 @test "Sakura installs the catalog without the secret" {
   export MODEL=sakura/gpt-oss-120b SAKURA_AI_ENGINE_API_KEY=dummy-secret
   run_pi
   [ "${status}" -eq 0 ]
   grep -qx 'sakura/gpt-oss-120b' "${TEST_ROOT}/pi-args"
-  jq -e '.providers.sakura | .baseUrl == "https://api.ai.sakura.ad.jp/v1" and .api == "openai-completions" and .apiKey == "$SAKURA_AI_ENGINE_API_KEY" and any(.models[]; .id == "preview/Kimi-K2.7-Code")' "${TEST_ROOT}/models.json"
+  jq -e '.providers.sakura | .baseUrl == "https://api.ai.sakura.ad.jp/v1" and .api == "openai-completions" and .apiKey == "$SAKURA_AI_ENGINE_API_KEY" and .compat.maxTokensField == "max_tokens" and any(.models[]; .id == "preview/Kimi-K2.7-Code" and .contextWindow == 262144)' "${TEST_ROOT}/models.json"
   run grep -q 'dummy-secret' "${TEST_ROOT}/models.json"
   [ "${status}" -eq 1 ]
 }

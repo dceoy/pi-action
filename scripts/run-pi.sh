@@ -30,6 +30,20 @@ if [[ "${MODEL}" == sakura/* ]]; then
     echo "::error::Unknown Sakura model: ${model_id}" >&2
     exit 1
   fi
+  # Sakura model specifications, updated 2026-11-18:
+  # https://manual.sakura.ad.jp/cloud/ai-engine/chat-models.html
+  tool_unsupported_models=(
+    llm-jp-3.1-8x13b-instruct4
+    preview/Phi-4-mini-instruct-cpu
+    preview/Qwen3-0.6B-cpu
+    preview/Qwen3-VL-30B-A3B-Instruct
+  )
+  for unsupported_model in "${tool_unsupported_models[@]}"; do
+    if [[ "${model_id}" == "${unsupported_model}" ]]; then
+      echo "::error::Sakura model ${model_id} does not support tool calls; this action always runs Pi with tools." >&2
+      exit 1
+    fi
+  done
   if [[ -z "${SAKURA_AI_ENGINE_API_KEY:-}" ]]; then
     echo "::error::Configure the SAKURA_AI_ENGINE_API_KEY Actions secret." >&2
     exit 1
