@@ -112,7 +112,7 @@ jobs:
       GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
 ```
 
-### Sakura AI Engine
+### Sakura AI Engine reviews
 
 ```yaml
 name: Pi review (Sakura AI Engine)

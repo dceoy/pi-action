@@ -194,7 +194,8 @@ assert_cleaned_up() {
   [ "${status}" -eq 0 ]
   grep -qx 'sakura/gpt-oss-120b' "${TEST_ROOT}/pi-args"
   jq -e '.providers.sakura | .baseUrl == "https://api.ai.sakura.ad.jp/v1" and .api == "openai-completions" and .apiKey == "$SAKURA_AI_ENGINE_API_KEY" and any(.models[]; .id == "preview/Kimi-K2.7-Code")' "${TEST_ROOT}/models.json"
-  ! grep -q 'dummy-secret' "${TEST_ROOT}/models.json"
+  run grep -q 'dummy-secret' "${TEST_ROOT}/models.json"
+  [ "${status}" -eq 1 ]
 }
 
 @test "Sakura review installs into isolated agent directory and cleans up" {
