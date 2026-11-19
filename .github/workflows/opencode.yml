@@ -31,7 +31,7 @@ jobs:
       actions: read
     uses: dceoy/opencode-action/.github/workflows/opencode-review.yml@3fffa878be91b1b84f958696238b260961b96973  # v0.8.2
     with:
-      model: opencode/longcat-2.5-free
+      model: opencode/mimo-v2.6-flash-free
     secrets:
       OPENCODE_API_KEY: ${{ secrets.OPENCODE_API_KEY }}
       GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
