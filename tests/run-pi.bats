@@ -217,7 +217,7 @@ assert_cleaned_up() {
   grep -qx 'sakura/gpt-oss-120b' "${TEST_ROOT}/pi-args"
   jq -e '.providers.sakura | .baseUrl == "https://api.ai.sakura.ad.jp/v1" and .api == "openai-completions" and .apiKey == "$SAKURA_AI_ENGINE_API_KEY" and .compat.maxTokensField == "max_tokens" and any(.models[]; .id == "preview/Kimi-K2.7-Code" and .contextWindow == 262144)' "${TEST_ROOT}/models.json"
   jq -e '.providers.sakura.models |
-    any(.[]; .id == "preview/DeepSeek-V4.1-Flash-1017" and .contextWindow == 1048575) and
+    any(.[]; .id == "preview/DeepSeek-V4.1-Flash-1017" and .contextWindow == 1048575 and .thinkingLevelMap.minimal == "low" and .thinkingLevelMap.medium == "high" and .thinkingLevelMap.off == null) and
     any(.[]; .id == "preview/GLM-5.3-Flash" and .contextWindow == 1048575) and
     any(.[]; .id == "gpt-oss-120b" and .thinkingLevelMap.minimal == "low" and .thinkingLevelMap.off == null) and
     any(.[]; .id == "preview/gemma-4-31B-it" and .thinkingLevelMap.minimal == "low") and

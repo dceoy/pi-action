@@ -10,7 +10,7 @@
       "models": [
         { "id": "gpt-oss-120b", "name": "gpt-oss-120b", "reasoning": true, "input": ["text"], "contextWindow": 131072, "maxTokens": 32000, "thinkingLevelMap": { "off": null, "minimal": "low" } },
         { "id": "llm-jp-3.1-8x13b-instruct4", "name": "llm-jp-3.1-8x13b-instruct4", "contextWindow": 4096 },
-        { "id": "preview/DeepSeek-V4.1-Flash-1017", "name": "preview/DeepSeek-V4.1-Flash-1017", "reasoning": true, "input": ["text", "image"], "contextWindow": 1048575, "maxTokens": 32000 },
+        { "id": "preview/DeepSeek-V4.1-Flash-1017", "name": "preview/DeepSeek-V4.1-Flash-1017", "reasoning": true, "input": ["text", "image"], "contextWindow": 1048575, "maxTokens": 32000, "thinkingLevelMap": { "off": null, "minimal": "low", "medium": "high" } },
         { "id": "preview/GLM-5.3-Flash", "name": "preview/GLM-5.3-Flash", "reasoning": true, "input": ["text", "image"], "contextWindow": 1048575, "maxTokens": 32000 },
         { "id": "preview/Kimi-K2.7-Code", "name": "preview/Kimi-K2.7-Code", "reasoning": true, "input": ["text", "image"], "contextWindow": 262144, "maxTokens": 32000, "thinkingLevelMap": { "off": null } },
         { "id": "preview/Phi-4-mini-instruct-cpu", "name": "preview/Phi-4-mini-instruct-cpu", "contextWindow": 4096 },
