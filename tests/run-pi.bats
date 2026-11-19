@@ -192,7 +192,7 @@ assert_cleaned_up() {
   export MODEL=sakura/llm-jp-3.1-8x13b-instruct4 SAKURA_AI_ENGINE_API_KEY=dummy-secret
   run_pi
   assert_invalid
-  [[ "${output}" == *"does not support tool calls"*"always runs Pi with tools"* ]]
+  [[ "${output}" == *"Sakura model llm-jp-3.1-8x13b-instruct4 cannot be used for agent runs: tool-call support is not established for it, and this action always runs Pi with tools."* ]]
 }
 
 @test "Sakura rejects models without tool calls in review-only mode" {
@@ -200,7 +200,14 @@ assert_cleaned_up() {
   export MODEL=sakura/preview/Qwen3-VL-30B-A3B-Instruct SAKURA_AI_ENGINE_API_KEY=dummy-secret
   run_pi
   assert_invalid
-  [[ "${output}" == *"does not support tool calls"*"always runs Pi with tools"* ]]
+  [[ "${output}" == *"Sakura model preview/Qwen3-VL-30B-A3B-Instruct cannot be used for agent runs: tool-call support is not established for it, and this action always runs Pi with tools."* ]]
+}
+
+@test "Sakura allows a non-default model with documented tool support" {
+  export MODEL=sakura/preview/GLM-5.3-Flash SAKURA_AI_ENGINE_API_KEY=dummy-secret
+  run_pi
+  [ "${status}" -eq 0 ]
+  grep -qx 'sakura/preview/GLM-5.3-Flash' "${TEST_ROOT}/pi-args"
 }
 
 @test "Sakura installs the catalog without the secret" {

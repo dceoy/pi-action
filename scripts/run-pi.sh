@@ -32,18 +32,27 @@ if [[ "${MODEL}" == sakura/* ]]; then
   fi
   # Sakura model specifications, updated 2026-11-18:
   # https://manual.sakura.ad.jp/cloud/ai-engine/chat-models.html
-  tool_unsupported_models=(
-    llm-jp-3.1-8x13b-instruct4
-    preview/Phi-4-mini-instruct-cpu
-    preview/Qwen3-0.6B-cpu
-    preview/Qwen3-VL-30B-A3B-Instruct
+  # Only models with documented tool-call support are allowed. Sync-discovered
+  # models remain unavailable for agent runs until curated into this list.
+  tool_supported_models=(
+    gpt-oss-120b
+    preview/DeepSeek-V4.1-Flash-1017
+    preview/GLM-5.3-Flash
+    preview/Kimi-K2.7-Code
+    preview/Qwen3.6-35B-A3B
+    preview/gemma-4-31B-it
   )
-  for unsupported_model in "${tool_unsupported_models[@]}"; do
-    if [[ "${model_id}" == "${unsupported_model}" ]]; then
-      echo "::error::Sakura model ${model_id} does not support tool calls; this action always runs Pi with tools." >&2
-      exit 1
+  tool_support_established=false
+  for supported_model in "${tool_supported_models[@]}"; do
+    if [[ "${model_id}" == "${supported_model}" ]]; then
+      tool_support_established=true
+      break
     fi
   done
+  if [[ "${tool_support_established}" == false ]]; then
+    echo "::error::Sakura model ${model_id} cannot be used for agent runs: tool-call support is not established for it, and this action always runs Pi with tools." >&2
+    exit 1
+  fi
   if [[ -z "${SAKURA_AI_ENGINE_API_KEY:-}" ]]; then
     echo "::error::Configure the SAKURA_AI_ENGINE_API_KEY Actions secret." >&2
     exit 1

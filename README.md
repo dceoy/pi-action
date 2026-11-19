@@ -45,13 +45,13 @@ Output appears in the job log.
 
 Set `SAKURA_AI_ENGINE_API_KEY` in the action step's environment and use, for
 example, `model: sakura/gpt-oss-120b`. The action installs its bundled
-[model catalog](config/sakura-models.json) into Pi's `models.json`; it contains
-ten models: the eight from opencode-action plus two documented Flash models.
-Model IDs can contain slashes, for
-example `sakura/preview/Kimi-K2.7-Code`. The catalog includes documented model
-limits and capabilities; pricing is omitted. The four models without tool-call
-support are rejected because the action always runs Pi with tools. The sync
-workflow keeps the catalog current like opencode-action's.
+[model catalog](config/sakura-models.json) into Pi's `models.json`. The catalog
+is the full registry of Sakura chat models, with documented limits and
+capabilities; pricing is omitted. Model IDs can contain slashes, for example
+`sakura/preview/Kimi-K2.7-Code`. Only models with documented tool-call support
+are enabled for agent runs. Models discovered by the sync workflow join the
+catalog disabled for agent runs until curated into the allowlist in
+[`scripts/run-pi.sh`](scripts/run-pi.sh).
 
 ```yaml
 env:
