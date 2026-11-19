@@ -70,9 +70,9 @@ It posts commit-bound `COMMENT` reviews without editing code or merging PRs.
 Add `.github/workflows/pi-review.yml` to your repository. Set the selected provider's
 Actions secret. Replace `FULL_COMMIT_SHA` with a reviewed `dceoy/pi-action` commit SHA.
 
-### OpenRouter
+Uses `sakura/preview/DeepSeek-V4.1-Flash-1017` by default.
 
-Uses `openrouter/thinkingmachines/inkling-2-small:free` by default.
+### OpenRouter
 
 ```yaml
 name: Pi review (OpenRouter)
@@ -87,6 +87,8 @@ permissions:
 jobs:
   review:
     uses: dceoy/pi-action/.github/workflows/pi-review.yml@FULL_COMMIT_SHA
+    with:
+      model: openrouter/openai/gpt-oss-120b
     secrets:
       OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
 ```
@@ -154,8 +156,6 @@ to `read,bash`. It verifies the PR URL and head SHA before posting one review.
 **Security:** These restrictions are not an OS sandbox or API allowlist.
 Pi can execute shell commands, and `pull-requests: write` permits more than reviews.
 Use only trusted workflows. Do not pass untrusted text as a prompt.
-
-OpenRouter's default free Inkling endpoint logs prompts and outputs for model improvement.
 Do not send confidential code or personal data.
 
 ## Inputs

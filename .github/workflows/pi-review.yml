@@ -7,7 +7,7 @@ on:
         required: false
         type: string
         description: Model to use with Pi, in provider/model format
-        default: openrouter/thinkingmachines/inkling-2-small:free
+        default: sakura/preview/DeepSeek-V4.1-Flash-1017
       prompt:
         required: false
         type: string
@@ -71,7 +71,7 @@ jobs:
       - name: Check model provider secret
         shell: bash
         env:
-          MODEL: ${{ inputs.model || 'openrouter/thinkingmachines/inkling-2-small:free' }}
+          MODEL: ${{ inputs.model || 'sakura/preview/DeepSeek-V4.1-Flash-1017' }}
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
           SAKURA_AI_ENGINE_API_KEY: ${{ secrets.SAKURA_AI_ENGINE_API_KEY }}
@@ -101,13 +101,13 @@ jobs:
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
-          SAKURA_AI_ENGINE_API_KEY: ${{ startsWith(inputs.model || 'openrouter/thinkingmachines/inkling-2-small:free', 'sakura/') && secrets.SAKURA_AI_ENGINE_API_KEY || '' }}
+          SAKURA_AI_ENGINE_API_KEY: ${{ startsWith(inputs.model || 'sakura/preview/DeepSeek-V4.1-Flash-1017', 'sakura/') && secrets.SAKURA_AI_ENGINE_API_KEY || '' }}
           GH_TOKEN: ${{ github.token }}
           GITHUB_TOKEN: ${{ github.token }}
           PR_REVIEW_URL: ${{ github.event.pull_request.html_url }}
           PR_REVIEW_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
         with:
-          model: ${{ inputs.model || 'openrouter/thinkingmachines/inkling-2-small:free' }}
+          model: ${{ inputs.model || 'sakura/preview/DeepSeek-V4.1-Flash-1017' }}
           thinking: ${{ inputs.thinking }}
           review-only: 'true'
           timeout-minutes: ${{ inputs.timeout-minutes || 60 }}
