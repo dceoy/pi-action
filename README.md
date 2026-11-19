@@ -46,7 +46,8 @@ Output appears in the job log.
 Set `SAKURA_AI_ENGINE_API_KEY` in the action step's environment and use, for
 example, `model: sakura/gpt-oss-120b`. The action installs its bundled
 [model catalog](config/sakura-models.json) into Pi's `models.json`; it contains
-the same eight models as opencode-action. Model IDs can contain slashes, for
+ten models: the eight from opencode-action plus two documented Flash models.
+Model IDs can contain slashes, for
 example `sakura/preview/Kimi-K2.7-Code`. The catalog includes documented model
 limits and capabilities; pricing is omitted. The four models without tool-call
 support are rejected because the action always runs Pi with tools. The sync
