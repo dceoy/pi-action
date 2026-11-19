@@ -1,0 +1,21 @@
+{
+  "$schema": "https://pi.dev/schemas/models.schema.json",
+  "providers": {
+    "sakura": {
+      "name": "Sakura AI Engine",
+      "baseUrl": "https://api.ai.sakura.ad.jp/v1",
+      "api": "openai-completions",
+      "apiKey": "$SAKURA_AI_ENGINE_API_KEY",
+      "models": [
+        { "id": "gpt-oss-120b", "name": "gpt-oss-120b" },
+        { "id": "llm-jp-3.1-8x13b-instruct4", "name": "llm-jp-3.1-8x13b-instruct4" },
+        { "id": "preview/Kimi-K2.7-Code", "name": "preview/Kimi-K2.7-Code" },
+        { "id": "preview/Phi-4-mini-instruct-cpu", "name": "preview/Phi-4-mini-instruct-cpu" },
+        { "id": "preview/Qwen3-0.6B-cpu", "name": "preview/Qwen3-0.6B-cpu" },
+        { "id": "preview/Qwen3-VL-30B-A3B-Instruct", "name": "preview/Qwen3-VL-30B-A3B-Instruct", "input": ["text", "image"] },
+        { "id": "preview/Qwen3.6-35B-A3B", "name": "preview/Qwen3.6-35B-A3B" },
+        { "id": "preview/gemma-4-31B-it", "name": "preview/gemma-4-31B-it" }
+      ]
+    }
+  }
+}

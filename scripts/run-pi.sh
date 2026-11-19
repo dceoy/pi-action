@@ -1,6 +1,9 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+sakura_catalog="${script_dir}/../config/sakura-models.json"
+
 if [[ -z "${PROMPT}" ]]; then
   echo "::error::The 'prompt' input is required." >&2
   exit 1
@@ -16,6 +19,21 @@ fi
 if [[ ! "${TIMEOUT_MINUTES}" =~ ^[1-9][0-9]*$ ]]; then
   echo "::error::timeout-minutes must be a positive integer." >&2
   exit 1
+fi
+if [[ "${MODEL}" == sakura/* ]]; then
+  if ! command -v jq > /dev/null 2>&1; then
+    echo "::error::jq is required for Sakura models." >&2
+    exit 1
+  fi
+  model_id="${MODEL#sakura/}"
+  if [[ -z "${model_id}" ]] || ! jq -e --arg id "${model_id}" '.providers.sakura.models[] | select(.id == $id)' "${sakura_catalog}" > /dev/null; then
+    echo "::error::Unknown Sakura model: ${model_id}" >&2
+    exit 1
+  fi
+  if [[ -z "${SAKURA_AI_ENGINE_API_KEY:-}" ]]; then
+    echo "::error::Configure the SAKURA_AI_ENGINE_API_KEY Actions secret." >&2
+    exit 1
+  fi
 fi
 review_home=""
 if [[ "${REVIEW_ONLY}" == "true" ]]; then
@@ -52,6 +70,20 @@ unset PR_LOOP_INSTALL_TOKEN
 for skill in "${skills[@]}"; do
   test -f "${skill_dir}/${skill}/SKILL.md"
 done
+if [[ "${MODEL}" == sakura/* ]]; then
+  agent_dir="${PI_CODING_AGENT_DIR:-${HOME}/.pi/agent}"
+  mkdir -p "${agent_dir}"
+  model_tmp="$(mktemp "${agent_dir}/.models.json.XXXXXXXX")"
+  if [[ -e "${agent_dir}/models.json" ]]; then
+    if ! jq --slurpfile bundled "${sakura_catalog}" '.providers = ((.providers // {}) + {sakura: $bundled[0].providers.sakura})' "${agent_dir}/models.json" > "${model_tmp}"; then
+      rm -f -- "${model_tmp}"
+      exit 1
+    fi
+  else
+    cp "${sakura_catalog}" "${model_tmp}"
+  fi
+  mv -- "${model_tmp}" "${agent_dir}/models.json"
+fi
 cmd=()
 if command -v timeout > /dev/null 2>&1; then
   cmd+=(timeout "${TIMEOUT_MINUTES}m")

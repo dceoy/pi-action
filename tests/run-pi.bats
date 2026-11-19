@@ -13,7 +13,7 @@ setup() {
   export MODEL="provider/model" THINKING="high" TOOLS="read,edit" TIMEOUT_MINUTES="7"
   export PR_LOOP_REF="66193c0383663b48ea144b438d7dd4a42e02b6e2"
   export REVIEW_ONLY="false" PR_LOOP_INSTALL_TOKEN="install-token"
-  unset PR_REVIEW_URL PR_REVIEW_HEAD_SHA
+  unset PR_REVIEW_URL PR_REVIEW_HEAD_SHA SAKURA_AI_ENGINE_API_KEY
   cat > "${TEST_ROOT}/bin/gh" << 'STUB'
 #!/usr/bin/env bash
 set -euo pipefail
@@ -55,6 +55,9 @@ if [[ "${REVIEW_ONLY}" == true ]]; then
   [[ "${XDG_DATA_HOME}" == "${HOME}/.local/share" ]]
   [[ "${XDG_CACHE_HOME}" == "${HOME}/.cache" ]]
   [[ "${XDG_STATE_HOME}" == "${HOME}/.local/state" ]]
+fi
+if [[ -f "${PI_CODING_AGENT_DIR}/models.json" ]]; then
+  cp "${PI_CODING_AGENT_DIR}/models.json" "${TEST_ROOT}/models.json"
 fi
 cat > "${TEST_ROOT}/stdin"
 exit "${PI_EXIT_CODE:-0}"
@@ -171,4 +174,50 @@ assert_cleaned_up() {
   run_pi
   [ "${status}" -eq 42 ]
   assert_cleaned_up
+}
+
+@test "Sakura requires a key before external commands" {
+  export MODEL=sakura/gpt-oss-120b
+  run_pi
+  assert_invalid
+}
+
+@test "Sakura rejects unknown model before external commands" {
+  export MODEL=sakura/unknown SAKURA_AI_ENGINE_API_KEY=dummy-secret
+  run_pi
+  assert_invalid
+}
+
+@test "Sakura installs the catalog without the secret" {
+  export MODEL=sakura/gpt-oss-120b SAKURA_AI_ENGINE_API_KEY=dummy-secret
+  run_pi
+  [ "${status}" -eq 0 ]
+  grep -qx 'sakura/gpt-oss-120b' "${TEST_ROOT}/pi-args"
+  jq -e '.providers.sakura | .baseUrl == "https://api.ai.sakura.ad.jp/v1" and .api == "openai-completions" and .apiKey == "$SAKURA_AI_ENGINE_API_KEY" and any(.models[]; .id == "preview/Kimi-K2.7-Code")' "${TEST_ROOT}/models.json"
+  ! grep -q 'dummy-secret' "${TEST_ROOT}/models.json"
+}
+
+@test "Sakura review installs into isolated agent directory and cleans up" {
+  review_target
+  export MODEL=sakura/preview/Kimi-K2.7-Code SAKURA_AI_ENGINE_API_KEY=dummy-secret
+  run_pi
+  [ "${status}" -eq 0 ]
+  jq -e '.providers.sakura' "${TEST_ROOT}/models.json"
+  [ ! -e "${PI_CODING_AGENT_DIR}/models.json" ]
+  assert_cleaned_up
+}
+
+@test "other providers do not create models.json" {
+  run_pi
+  [ "${status}" -eq 0 ]
+  [ ! -e "${PI_CODING_AGENT_DIR}/models.json" ]
+}
+
+@test "Sakura preserves existing providers and settings" {
+  mkdir -p "${PI_CODING_AGENT_DIR}"
+  printf '%s\n' '{"other":true,"providers":{"custom":{"name":"Custom"}}}' > "${PI_CODING_AGENT_DIR}/models.json"
+  export MODEL=sakura/gpt-oss-120b SAKURA_AI_ENGINE_API_KEY=dummy-secret
+  run_pi
+  [ "${status}" -eq 0 ]
+  jq -e '.other and .providers.custom.name == "Custom" and .providers.sakura.name == "Sakura AI Engine"' "${TEST_ROOT}/models.json"
 }
