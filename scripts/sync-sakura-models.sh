@@ -72,6 +72,10 @@ for model in "${models[@]}"; do
 
   case "${status}" in
     2??)
+      if ! jq -e -s 'length == 1 and (.[0].choices | type == "array")' "${probe_response}" > /dev/null 2>&1; then
+        echo "Invalid chat probe response for Sakura model ${model}." >&2
+        exit 1
+      fi
       chat_models+=("${model}")
       ;;
     401 | 403 | 429 | 5??)

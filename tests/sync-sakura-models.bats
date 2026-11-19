@@ -6,6 +6,7 @@ setup() {
   mkdir -p "${TEST_ROOT}/bin" "${TEST_ROOT}/tmp"
   export TMPDIR="${TEST_ROOT}/tmp" PATH="${TEST_ROOT}/bin:${PATH}"
   export SAKURA_AI_ENGINE_API_KEY=dummy
+  export PROBE_RESPONSE='{"choices":[{"message":{"role":"assistant","content":"OK"}}]}'
   cp "${BATS_TEST_DIRNAME}/../config/sakura-models.json" "${TEST_ROOT}/catalog.json"
   cp "${TEST_ROOT}/catalog.json" "${TEST_ROOT}/original.json"
   cat > "${TEST_ROOT}/bin/curl" <<'STUB'
@@ -19,7 +20,7 @@ else
     if [[ "$1" == --output ]]; then output="$2"; shift; fi
     shift
   done
-  printf '{}' > "${output}"
+  printf '%s' "${PROBE_RESPONSE}" > "${output}"
   printf '%s' "${PROBE_STATUS:-200}"
 fi
 STUB
@@ -63,6 +64,12 @@ assert_unchanged() {
 
 @test "HTTP 400 refuses classification and leaves catalog unchanged" {
   export PROBE_STATUS=400
+  sync_catalog
+  assert_unchanged
+}
+
+@test "malformed HTTP 200 probe response leaves catalog unchanged" {
+  export PROBE_RESPONSE='{}'
   sync_catalog
   assert_unchanged
 }
