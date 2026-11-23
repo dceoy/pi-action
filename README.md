@@ -30,7 +30,7 @@ jobs:
         with:
           persist-credentials: false
       - name: Run Pi
-        uses: dceoy/pi-action@8f3b86ae4391684e2e126153348f8bcf0de595b7  # v0.1.1
+        uses: dceoy/pi-action@f946fc9216ab34b69f9fadeb6dd54c815cb6577f  # v0.2.0
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
         with:
